@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<script src="bower_components/angular-resource/angular-resource.js"></script>
 
 // added two library files to do youtube embeds
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -13,26 +14,51 @@
     <input type="submit" value="Add New">
 </form>
 </br>
-<div ng-repeat="x in karateList">
+<div ng-repeat="x in karateList" style="border:1px solid green">
     <input type="checkbox" ng-model="x.done" /> <span ng-bind="x.karateText"></span>
-    <!-- You can use 'youtube-video' as an element or attribute. -->
-    <youtube-video video-id="getId(x.karateText)"></youtube-video>
+    <img src="{{x.thumbnail}}"/>
+    <strong ng-bind="x.title"></strong>
+    </br>
+    <h3>Description:</h3>
+    <span ng-bind="x.description"></span>
+    <h3>Category:</h3>
+    <span ng-bind="x.category"></span>
 </div>
 
 <p><button ng-click="remove()">Remove marked video</button></p>
 
-
+<!-- You can use 'youtube-video' as an element or attribute. -->
+<youtube-video video-id="getId(x.karateText)"></youtube-video>
 
 <script>
-var app = angular.module('myApp', ['youtube-embed']); 
+var app = angular.module('myApp', ['youtube-embed', 'ngResource']); 
 app.controller('karateCtrl', function($scope, youtubeEmbedUtils) 
     {
-    $scope.karateList = [];
+    var video1 = {karateText:'https://www.youtube.com/watch?v=8w2lNpixqOc', thumbnail:'https://i.ytimg.com/vi/8w2lNpixqOc/mqdefault.jpg', title:'Adam Levine Performs "Purple Rain" At The Howard Stern Birthday Bash on SiriusXM', description:"Adam Levine and Train perform Prince's \"Purple Rain\" at Howard's 2014 Birthday Bash on SiriusXM!\n\nWant to know what's going on with Howard Stern in the future?\n\nFollow us Twitter: http://bit.ly/1RzxGPD\nOn Facebook: http://on.fb.me/1JELtz3\nOn Instagram: https://goo.gl/VsWTND\n\nFor more great content from the Howard Stern Show visit our official website: http://www.HowardStern.com\n\nHear more Howard Stern by signing up for a free SiriusXM trial: https://goo.gl/uNL0Du", category:"Entertainment", done:false};
+    var video2 = {karateText:'https://www.youtube.com/watch?v=sF9-AHWCeU8', thumbnail:'https://i.ytimg.com/vi/sF9-AHWCeU8/mqdefault.jpg', title:'Animation Movies 2016 English - 8.0 IDMB - Watch NOW ( Online )', description:"Lambert joins the Dragon Slayers' League to save Altera from the Black Dragon.", category:"People & Blogs", done:false};
+    // var video3 = {karateText:'https://www.youtube.com/watch?v=3IwLqtRxOKs', thumbnail:'https://i.ytimg.com/vi/3IwLqtRxOKs/mqdefault.jpg', title:'Animation Movies HD | Best Movies For Kids, Childrens | Disney Movies', description:"A young orphaned boy raised by underground cave-dwelling trash collectors tries to save his friends from an evil exterminator. Based on the children's novel 'Here Be Monsters' by Alan Snow.", category:"Film & Animation", done:false};
+    $scope.karateList = [video1, video2];
     $scope.karateAdd = function() 
         {
-        $scope.karateList.push({karateText:$scope.karateInput, done:false});
-        $scope.karateInput = "";
-        console.log(YT);
+        var thumbnail;
+        var title;
+        var description;
+        var category;
+        var vId=youtubeEmbedUtils.getIdFromURL($scope.karateInput);
+        youtubeEmbedUtils.getData.get({id:vId}, function(res){
+            thumbnail = res.items[0].snippet.thumbnails.medium.url;
+            title = res.items[0].snippet.title;
+            description = res.items[0].snippet.description;
+            var categoryId = res.items[0].snippet.categoryId;
+            youtubeEmbedUtils.getCategory.get({id:categoryId}, function(cat){
+                category = cat.items[0].snippet.title;
+                $scope.karateList.push({karateText:$scope.karateInput, thumbnail:thumbnail, title:title, description:description, category:category, done:false});
+                $scope.karateInput = "";
+            });
+        });
+        
+
+        
         };
 
     $scope.remove = function() 
@@ -44,10 +70,11 @@ app.controller('karateCtrl', function($scope, youtubeEmbedUtils)
             if (!x.done) $scope.karateList.push(x);
             });
         };
-    $scope.getId = function(url)
-        {
-            return id=youtubeEmbedUtils.getIdFromURL(url);
-        };
+    // $scope.getId = function(url)
+    //     {
+    //         //return id=youtubeEmbedUtils.getIdFromURL(url);
+    //     };
+
  
  $scope.theBestVideo = 'TyX2nGbAWgs';
 

@@ -4,8 +4,14 @@ if (!angular && require){
 
 /* global YT */
 angular.module('youtube-embed', ['ng'])
-.service ('youtubeEmbedUtils', ['$window', '$rootScope', function ($window, $rootScope) {
+.service ('youtubeEmbedUtils', ['$window', '$rootScope', '$resource', function ($window, $rootScope, $resource) {
     var Service = {}
+    var youtube_apiKey = 'AIzaSyA7Fs-Wos9xtICQjLtYWqSksKbwdzy5NTA';
+    Service.getData = $resource('https://www.googleapis.com/youtube/v3/videos?', {part:'snippet',key:youtube_apiKey}, {get:{method:"GET",cache:true}});
+
+    Service.getComments = $resource('https://www.googleapis.com/youtube/v3/commentThreads?', {part:'snippet',key:youtube_apiKey}, {get:{method:"GET",cache:true}});
+
+    Service.getCategory = $resource('https://www.googleapis.com/youtube/v3/videoCategories?', {part:'snippet',key:youtube_apiKey}, {get:{method:"GET",cache:true}});
 
     // adapted from http://stackoverflow.com/a/5831191/1614967
     var youtubeRegexp = /https?:\/\/(?:[0-9A-Z-]+\.)?(?:youtu\.be\/|youtube(?:-nocookie)?\.com\S*[^\w\s-])([\w-]{11})(?=[^\w-]|$)(?![?=&+%\w.-]*(?:['"][^<>]*>|<\/a>))[?=&+%\w.-]*/ig;

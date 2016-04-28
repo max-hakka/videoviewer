@@ -1,84 +1,216 @@
 <!DOCTYPE html>
 <html>
-<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
-<script src="bower_components/angular-resource/angular-resource.js"></script>
+    <head>
+        <title>Video Viewer</title>
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+        <script src="bower_components/angular-resource/angular-resource.js"></script>
+        <script src="bower_components/angular-local-storage/dist/angular-local-storage.min.js"></script>
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <script src="angular-youtube-embed.js"></script>
+        <script src="bower_components/jquery/dist/jquery.js"></script>
+        <style type="text/css">
+            body{
+                background-color: black;
+                color: white;
+            }
+            .container {
+                overflow: hidden;
+                text-align: center;
+            }
+            .playlist{
+                border-top:1px solid gray;
+                border-bottom:1px solid gray;
+                overflow: hidden;
+                text-align: left;
+                overflow-y: scroll;
+                max-height: 200px;
+            }
+            .title{
+                color: #009FFF;
+                text-decoration: none;
+            }
+            .listItem{
+                float:left;
+                border:1px solid gray;
+                width: 320px;
+                margin: 5px 0px 5px 10px;
+                font-size: 14px;
+            }
+            input[type="checkbox"]{
+                margin-left: 10px;
+            }
+            .starrating{
+                background-image: url("starrating0.png");
+            }
+        </style>
+    </head>
 
-// added two library files to do youtube embeds
-<script src="https://www.youtube.com/iframe_api"></script>
-<script src="angular-youtube-embed.js"></script>
 
 <body ng-app="myApp" ng-controller="karateCtrl">
-<h2>My karate List</h2>
-<form ng-submit="karateAdd()">
-    <input type="text" ng-model="karateInput" size="50" placeholder="Add New video">
-    <input type="submit" value="Add New">
-</form>
-</br>
-<div ng-repeat="x in karateList" style="border:1px solid green">
-    <input type="checkbox" ng-model="x.done" /> <span ng-bind="x.karateText"></span>
-    <img src="{{x.thumbnail}}"/>
-    <strong ng-bind="x.title"></strong>
+    <h2>My karate List</h2>
+    <form ng-submit="karateAdd()">
+        <input type="text" ng-model="karateInput" size="50" placeholder="Add New video">
+        <input type="submit" value="Add New">
+    </form>
     </br>
-    <h3>Description:</h3>
-    <span ng-bind="x.description"></span>
-    <h3>Category:</h3>
-    <span ng-bind="x.category"></span>
-</div>
+    <div class="container">
+            <!-- You can use 'youtube-video' as an element or attribute. -->
+        <youtube-video video-id="theBestVideo"></youtube-video>
+        <div class="playlist">
+            <div ng-repeat="x in karateList" class="listItem">
+                <div style="overflow:hidden;">
+                    <a href="#"><img src="{{x.thumbnail}}" width="160" height="100" style="float:left;" ng-click="displayVideo(x.karateText)"/></a>
+                    <a href="#" class="title" ng-bind="x.title" ng-click="displayVideo(x.karateText)"></a>
+                    </br>
+                </div>
+                <input type="checkbox" ng-model="x.done" style="float:left;"/>
+                <img src="starrating{{x.rating}}.png" width="110" height="30" style="float:right;" />
+            </div>
+        </div>
+        <button ng-click="remove()" style="float:left;">Remove marked video</button>
+        <div class="starrating" ng-show="notEmptyPlaylist" style="width:200px;height:40px;float:right;background-position:-5px 0;">
+            <div data-star="1" style="width:37px;height:40px;float:left;" ng-mouseover="changeStars($event)" ng-mouseleave="displayStars($event)" ng-click="setRating($event)"></div>
+            <div data-star="2" style="width:37px;height:40px;float:left;" ng-mouseover="changeStars($event)" ng-mouseleave="displayStars($event)" ng-click="setRating($event)"></div>
+            <div data-star="3" style="width:37px;height:40px;float:left;" ng-mouseover="changeStars($event)" ng-mouseleave="displayStars($event)" ng-click="setRating($event)"></div>
+            <div data-star="4" style="width:37px;height:40px;float:left;" ng-mouseover="changeStars($event)" ng-mouseleave="displayStars($event)" ng-click="setRating($event)"></div>
+            <div data-star="5" style="width:37px;height:40px;float:left;" ng-mouseover="changeStars($event)" ng-mouseleave="displayStars($event)" ng-click="setRating($event)"></div>
+        </div>
+        <div>
+            <h2 class="title">{{playing.title}}</h2>
+            <h3>Description:</h3>
+            <span ng-bind="playing.description" style="color:gray;"></span>
+            <h3>Category:</h3>
+            <span ng-bind="playing.category" style="color:gray;"></span>
+        </div>
+        <div style="float:left; text-align:left;width:100%;">
+            <h2>Comments</h2>
+            <hr/>
+            <div style="overflow:hidden;">
+                <form ng-submit="addComment()">
+                    <img src="http://www.hdi-slc.com/wp-content/uploads/2012/07/blank-profile.jpg" width="60" height="60" style="float:left;"/>
+                    <input type="text" placeholder="Write comment" ng-model="inputComment" style="width:50%; margin-left:15px;height:50px;"/>
+                </form>
+            </div>
+            <div style="overflow:hidden; margin-top:20px; color:gray;" ng-repeat="com in comments">
+                <img src="http://www.hdi-slc.com/wp-content/uploads/2012/07/blank-profile.jpg" width="60" height="60" style="float:left;"/>
 
-<p><button ng-click="remove()">Remove marked video</button></p>
+                <span style="margin-left:15px;float:left;">
+                    <strong class="title">{{com.author}}</strong>
+                    </br>
+                    {{com.message}}
+                </span>
+            </div>
+        </div>
+    </div>    
 
-<!-- You can use 'youtube-video' as an element or attribute. -->
-<youtube-video video-id="getId(x.karateText)"></youtube-video>
-
-<script>
-var app = angular.module('myApp', ['youtube-embed', 'ngResource']); 
-app.controller('karateCtrl', function($scope, youtubeEmbedUtils) 
-    {
-    var video1 = {karateText:'https://www.youtube.com/watch?v=8w2lNpixqOc', thumbnail:'https://i.ytimg.com/vi/8w2lNpixqOc/mqdefault.jpg', title:'Adam Levine Performs "Purple Rain" At The Howard Stern Birthday Bash on SiriusXM', description:"Adam Levine and Train perform Prince's \"Purple Rain\" at Howard's 2014 Birthday Bash on SiriusXM!\n\nWant to know what's going on with Howard Stern in the future?\n\nFollow us Twitter: http://bit.ly/1RzxGPD\nOn Facebook: http://on.fb.me/1JELtz3\nOn Instagram: https://goo.gl/VsWTND\n\nFor more great content from the Howard Stern Show visit our official website: http://www.HowardStern.com\n\nHear more Howard Stern by signing up for a free SiriusXM trial: https://goo.gl/uNL0Du", category:"Entertainment", done:false};
-    var video2 = {karateText:'https://www.youtube.com/watch?v=sF9-AHWCeU8', thumbnail:'https://i.ytimg.com/vi/sF9-AHWCeU8/mqdefault.jpg', title:'Animation Movies 2016 English - 8.0 IDMB - Watch NOW ( Online )', description:"Lambert joins the Dragon Slayers' League to save Altera from the Black Dragon.", category:"People & Blogs", done:false};
-    // var video3 = {karateText:'https://www.youtube.com/watch?v=3IwLqtRxOKs', thumbnail:'https://i.ytimg.com/vi/3IwLqtRxOKs/mqdefault.jpg', title:'Animation Movies HD | Best Movies For Kids, Childrens | Disney Movies', description:"A young orphaned boy raised by underground cave-dwelling trash collectors tries to save his friends from an evil exterminator. Based on the children's novel 'Here Be Monsters' by Alan Snow.", category:"Film & Animation", done:false};
-    $scope.karateList = [video1, video2];
-    $scope.karateAdd = function() 
+    <script>
+    var app = angular.module('myApp', ['youtube-embed', 'ngResource', 'LocalStorageModule']); 
+    app.controller('karateCtrl', function($scope, youtubeEmbedUtils, localStorageService) 
         {
-        var thumbnail;
-        var title;
-        var description;
-        var category;
-        var vId=youtubeEmbedUtils.getIdFromURL($scope.karateInput);
-        youtubeEmbedUtils.getData.get({id:vId}, function(res){
-            thumbnail = res.items[0].snippet.thumbnails.medium.url;
-            title = res.items[0].snippet.title;
-            description = res.items[0].snippet.description;
-            var categoryId = res.items[0].snippet.categoryId;
-            youtubeEmbedUtils.getCategory.get({id:categoryId}, function(cat){
-                category = cat.items[0].snippet.title;
-                $scope.karateList.push({karateText:$scope.karateInput, thumbnail:thumbnail, title:title, description:description, category:category, done:false});
-                $scope.karateInput = "";
-            });
-        });
+            $scope.notEmptyPlaylist = false;
+        // var video1 = {karateText:'https://www.youtube.com/watch?v=8w2lNpixqOc', thumbnail:'https://i.ytimg.com/vi/8w2lNpixqOc/mqdefault.jpg', title:'Adam Levine Performs "Purple Rain" At The Howard Stern Birthday Bash on SiriusXM', description:"Adam Levine and Train perform Prince's \"Purple Rain\" at Howard's 2014 Birthday Bash on SiriusXM!\n\nWant to know what's going on with Howard Stern in the future?\n\nFollow us Twitter: http://bit.ly/1RzxGPD\nOn Facebook: http://on.fb.me/1JELtz3\nOn Instagram: https://goo.gl/VsWTND\n\nFor more great content from the Howard Stern Show visit our official website: http://www.HowardStern.com\n\nHear more Howard Stern by signing up for a free SiriusXM trial: https://goo.gl/uNL0Du", category:"Entertainment", rating:0, done:false};
+        // var video2 = {karateText:'https://www.youtube.com/watch?v=sF9-AHWCeU8', thumbnail:'https://i.ytimg.com/vi/sF9-AHWCeU8/mqdefault.jpg', title:'Animation Movies 2016 English - 8.0 IDMB - Watch NOW ( Online )', description:"Lambert joins the Dragon Slayers' League to save Altera from the Black Dragon.", category:"People & Blogs", rating:0, done:false};
+        // var video3 = {karateText:'https://www.youtube.com/watch?v=3IwLqtRxOKs', thumbnail:'https://i.ytimg.com/vi/3IwLqtRxOKs/mqdefault.jpg', title:'Animation Movies HD | Best Movies For Kids, Childrens | Disney Movies', description:"A young orphaned boy raised by underground cave-dwelling trash collectors tries to save his friends from an evil exterminator. Based on the children's novel 'Here Be Monsters' by Alan Snow.", category:"Film & Animation", rating:0, done:false};
         
-
+        localStorageService.bind($scope, 'karateList', []);
+        //localStorageService.clearAll();
+        console.log($scope.karateList);
         
-        };
-
-    $scope.remove = function() 
-        {
-        var oldList = $scope.karateList;
-        $scope.karateList = [];
-        angular.forEach(oldList, function(x) 
+        $scope.karateAdd = function()
             {
-            if (!x.done) $scope.karateList.push(x);
+            var thumbnail;
+            var title;
+            var description;
+            var category;
+            var vId=youtubeEmbedUtils.getIdFromURL($scope.karateInput);
+            youtubeEmbedUtils.getData.get({id:vId}, function(res){
+                thumbnail = res.items[0].snippet.thumbnails.default.url;
+                title = res.items[0].snippet.title;
+                description = res.items[0].snippet.description;
+                var categoryId = res.items[0].snippet.categoryId;
+                youtubeEmbedUtils.getCategory.get({id:categoryId}, function(cat){
+                    category = cat.items[0].snippet.title;
+                    $scope.karateList.push({karateText:$scope.karateInput, thumbnail:thumbnail, title:title, description:description, category:category, rating:0, done:false});
+                    $scope.karateInput = "";
+                });
             });
+            };
+
+        function getIndex(url){
+            var indexOfplaying = -1;
+            for(i=0; i < $scope.karateList.length; i++){
+                if($scope.karateList[i].karateText == url){
+                    indexOfplaying = i;
+                }
+            }
+            return indexOfplaying;
+        }
+
+        $scope.displayVideo = function(url){
+            $scope.notEmptyPlaylist = true;
+            $scope.theBestVideo = youtubeEmbedUtils.getIdFromURL(url);
+            var index = getIndex(url);
+            $scope.playing = $scope.karateList[index];
+            $scope.getComments($scope.theBestVideo);
+            $(".starrating").css("background-image", 'url("starrating'+$scope.playing.rating+'.png")');
+        }
+
+        $scope.remove = function() 
+            {
+            var oldList = $scope.karateList;
+            $scope.karateList = [];
+            angular.forEach(oldList, function(x) 
+                {
+                if (!x.done) $scope.karateList.push(x);
+                });
+            };
+        $scope.getId = function(url){
+            return id=youtubeEmbedUtils.getIdFromURL(url);
         };
-    // $scope.getId = function(url)
-    //     {
-    //         //return id=youtubeEmbedUtils.getIdFromURL(url);
-    //     };
 
- 
- $scope.theBestVideo = 'TyX2nGbAWgs';
+        $scope.getComments = function(videoId){
+            var id = $scope.getId(videoId);
+            youtubeEmbedUtils.getComments.get({videoId:id}, function(res){
+                var list = [];
+                for(key in res.items){
+                    list.push({author:res.items[key].snippet.topLevelComment.snippet.authorDisplayName, message:res.items[key].snippet.topLevelComment.snippet.textDisplay});
+                }
+                $scope.comments = list;
+            });
+        }
 
-});
-</script>
+        $scope.addComment = function(){
+            $scope.comments.push({author:'unknown', message:$scope.inputComment});
+            $scope.inputComment = '';
+        }
+
+        $scope.changeStars = function(event){
+            var url='starrating'+event.target.dataset.star+'.png';
+            $(event.target).parent().css("background-image", 'url("'+url+'")');
+        }
+
+        $scope.displayStars = function(event){
+            var url='starrating'+$scope.playing.rating+'.png';
+            $(event.target).parent().css("background-image", 'url("'+url+'")');
+        }
+
+        $scope.setRating = function(event){
+            var index = getIndex($scope.playing.karateText);
+            $scope.playing.rating = event.target.dataset.star;
+            $scope.karateList[index] = $scope.playing;
+            var url='starrating'+$scope.playing.rating+'.png';
+            $(event.target).parent().css("background-image", 'url("'+url+'")');
+            console.log($scope.playing.rating);
+        }
+
+        //if($scope.karateList.length>0){
+            var firstVideo = $scope.karateList[0].karateText;
+            $scope.theBestVideo = youtubeEmbedUtils.getIdFromURL(firstVideo);
+            $scope.displayVideo(firstVideo);
+            $scope.getComments($scope.theBestVideo);
+        //}
+
+    });
+    </script>
 </body>
 </html>
